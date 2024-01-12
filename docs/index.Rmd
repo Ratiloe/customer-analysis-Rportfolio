@@ -1,0 +1,177 @@
+---
+title: "index"
+author: "Ratiloe"
+date: "1/12/2024"
+output: html_document
+---
+
+
+## Summary
+This entire analysis is based on the sales sample data obtained from Kaggle. The preview below shows the structure of the data. It documents a company's profits and orders from all over the globe. The aim is to unearth what secrets and pattern may lie within the data, such data as could be instrumental for this notional company. 
+
+### pakages
+
+```{r loadlibraries, message = FALSE, warning=FALSE}
+library(readr)
+library(dplyr)
+library(tidyverse)
+library(lubridate)
+
+```
+### Data preview
+```{r previewdata, echo=FALSE, message=FALSE, warning=FALSE}
+
+salesData <- read_csv("sales_data.csv")
+head(salesData, 10)
+
+```
+
+
+```{r tidyup, echo = FALSE, message=FALSE, warning=FALSE, results='hide'}
+
+
+salesData$order_date <- dmy(salesData$order_date)
+salesData$ship_date <- dmy(salesData$ship_date)
+
+
+```
+
+### What is our best selling product?
+The products on display are grouped in 3 broad categories; technology based products, office supplies and furniture. The accumulated profits for the entire 4 years by category:    
+
+
+```{r best_seller_category, echo=TRUE, warning=FALSE, message=FALSE}
+
+#what is the best selling product_category?
+salesData %>% 
+  group_by(category) %>% 
+  summarize(total_profit = sum(profit)) %>% 
+  arrange(desc(total_profit)) %>% 
+  mutate(tot_profit = format(total_profit, digits = 3, big.mark = ",")) %>% 
+  select(category, tot_profit)
+  
+
+
+```
+It might be prudent to further group by year:
+What is interesting to note here, though not immediately apparent, is that technology based products accrue higher profits each year save for 2014 which only features data on furniture.
+
+```{r year_profits, echo=TRUE, warning=FALSE, message=FALSE}
+
+salesData %>% 
+  group_by(year, category) %>% 
+  summarise(total_prof = sum(profit)) %>% 
+  mutate(annual_profits = format(total_prof, digits = 3, big.mark = ",")) %>% 
+  select(year, category, annual_profits)
+
+```
+When we further group by sub-category we get the following ranking:
+
+```{r best_seller_subcategory, echo=TRUE, warning=FALSE, message=FALSE}
+
+salesData %>% 
+  group_by(category, sub_category) %>% 
+  summarise(sub_items_profits = sum(profit)) %>% 
+  arrange(desc(sub_items_profits))
+
+```
+
+### Profit trends throughout the year
+The profit trends seem to increase each successive year, 2011 having the lowest trend through out the year and 2014 seeing the highest in comparison to any other year. It is also useful to note that the accumulated profits for each year show an overall increasing trend. The 2014 trend peaks around the 9th month(September). There is also something special about the 6th month, 2012, 2013, and 2014 are almost aligned at that point.
+
+
+
+```{r tunover_by_months, echo=TRUE, warning=FALSE, message=FALSE}
+
+monthly_psalesData <- salesData %>% 
+  mutate(month_pro = month(order_date)) %>% 
+  group_by(year, month_pro) %>% 
+  summarise(monthly_profits = sum(profit))
+
+monthly_psalesData$year_fac <- as.factor(monthly_psalesData$year)
+
+monthly_psalesData %>% 
+  ggplot(aes(month_pro, monthly_profits)) +
+  geom_line(aes(color = year_fac))
+
+```
+
+### Product Category based Performance
+Once again is becomes apparent that technology based products outperform the rest, though it can clearly be noted that office supplies are not far behind.
+
+```{r trend_by_category, echo = TRUE, message = FALSE, warning=FALSE}
+
+salesData %>% 
+  mutate(permonth = month(order_date)) %>% 
+  group_by(year, permonth, category) %>% 
+  summarise(profit_M = sum(profit)) %>% 
+  mutate(year_fac = as.factor(year)) %>% 
+  ggplot(aes(permonth, profit_M, color = category)) +
+  geom_line() + 
+  facet_wrap( ~ year_fac) +
+  labs(title = paste("office supplies and technology based products are the most \nprofitable across the year"), y = "accumulated profits", x = "Monthly")
+
+```
+
+### On a daily basis
+Sales trends on a daily basis end up being messier than they are informative however just off the top Technology based products across the year(for different years) and office supplies cross the 5000 daily profit mark with regularity from day 200 onward. 
+
+
+```{r daily_projections, echo=FALSE, message=FALSE, warning=FALSE}
+
+top_prof <- salesData %>% 
+  mutate(days365 = yday(order_date)) %>% 
+  group_by(year, days365, category) %>% 
+  summarise(daily_profits = sum(profit)) %>% 
+  arrange(desc(daily_profits)) %>% 
+  mutate(year_fac = as.factor(year)) %>% 
+  head(20)
+top_prof$category_fac <- top_prof$category
+top_prof$category_fac[top_prof$category == "Technology"] <- "tech"
+top_prof$category_fac[top_prof$category == "Office Supplies"] <- "office"
+
+
+salesData %>% 
+  mutate(days365 = yday(order_date)) %>% 
+  group_by(year, days365, category) %>% 
+  summarise(daily_profits = sum(profit)) %>% 
+  mutate(year_fac = as.factor(year)) %>% 
+  ggplot(aes(days365, daily_profits, color = year_fac)) +
+  geom_point() +
+  geom_label(aes(label = category_fac), data = top_prof, nudge_y = 2, alpha = 0.5)
+
+```
+### Who are our main sources of profit and what do they buy?
+individual consumers make the bulk of our profits, racking in more than the other 2 combined:
+
+
+```{r customer_type, echo=TRUE, message=FALSE, warning=FALSE}
+salesData %>% 
+  group_by(segment) %>% 
+  summarise(profit = sum(profit))
+
+```
+**Technology based products are the most profitable for all customer types. Consumers come in first, followed by corporate and finally home office**
+
+```{r customer_type2, echo=TRUE, message=FALSE, warning=FALSE}
+
+salesData %>% 
+  group_by(segment, category) %>% 
+  summarise(profits = sum(profit)) %>% 
+  arrange(desc(profits))
+
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
