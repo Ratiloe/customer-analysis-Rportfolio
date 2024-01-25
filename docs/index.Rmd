@@ -1,6 +1,6 @@
 ---
 title: "index"
-author: "Ratiloe"
+author: "Talanyane"
 date: "1/12/2024"
 output: html_document
 ---
@@ -37,7 +37,7 @@ salesData$ship_date <- dmy(salesData$ship_date)
 ```
 
 ### What is our best selling product?
-The products on display are grouped in 3 broad categories; technology based products, office supplies and furniture. The accumulated profits for the entire 4 years by category:    
+The products on display are grouped in 3 broad categories: technology based products, office supplies and furniture. The accumulated profits for the entire 4 years by category:    
 
 
 ```{r best_seller_category, echo=TRUE, warning=FALSE, message=FALSE}
@@ -95,6 +95,8 @@ monthly_psalesData %>%
   geom_line(aes(color = year_fac))
 
 ```
+![profit_trends_across_the_year](../screenshots/profit_trends.png)
+
 
 ### Product Category based Performance
 Once again is becomes apparent that technology based products outperform the rest, though it can clearly be noted that office supplies are not far behind.
@@ -112,6 +114,7 @@ salesData %>%
   labs(title = paste("office supplies and technology based products are the most \nprofitable across the year"), y = "accumulated profits", x = "Monthly")
 
 ```
+![monthly trends for each year](../screenshots/monthly_trends1.png)
 
 ### On a daily basis
 Sales trends on a daily basis end up being messier than they are informative however just off the top Technology based products across the year(for different years) and office supplies cross the 5000 daily profit mark with regularity from day 200 onward. 
@@ -138,9 +141,13 @@ salesData %>%
   mutate(year_fac = as.factor(year)) %>% 
   ggplot(aes(days365, daily_profits, color = year_fac)) +
   geom_point() +
-  geom_label(aes(label = category_fac), data = top_prof, nudge_y = 2, alpha = 0.5)
+  geom_label(aes(label = category_fac), data = top_prof, nudge_y = 2, alpha = 0.5) +
+  labs(y = "profits", x = "days(365)")
 
 ```
+![scatter plot of the profits](../screenshots/scatter01.png)
+
+
 ### Who are our main sources of profit and what do they buy?
 individual consumers make the bulk of our profits, racking in more than the other 2 combined:
 
